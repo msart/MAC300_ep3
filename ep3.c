@@ -4,6 +4,28 @@
 #include <stdlib.h>
 #define E 0.0001 /*error*/
 
+double inner_product(double *v1, double *v2, int rows, int k) {
+	int i;
+	double inner_product = 0;
+
+	for (i = k; i < rows; i ++)
+		inner_product += v1[i - k]*v2[i];
+	
+	return inner_product;
+}
+
+int backrow(double **R, double *b, int columns) {
+	int i, j;
+	for (i = columns - 1; i >= 0; i --) {
+		if (fabs(R[i][i]) < E) /* == 0 */
+			return -1;
+		for (j = i + 1; j < columns; j ++)
+			b[i] -= R[i][j]*b[j];
+		b[i] = b[i]/R[i][i];
+	}
+	return 0;
+}
+
 void vector_times_matrix(double *v, double **A, int rows, int columns, int k) {
 	double *aux;
 	int i, j;
@@ -63,6 +85,27 @@ void free_matrix(int rows, double **mat){
     free(mat);
 }
 
+void update_vector(double *b, double **Q, int rows, int columns, double *gamma) {
+	int i, k;
+	double *u, factor;
+	u = malloc((rows) * sizeof(double));
+	for (k = 0; k < columns; k ++) {
+		u[0] = 1;
+		for (i = k + 1; i < rows; i ++)
+			u[i - k] = Q[i][k];
+	
+		factor = gamma[k]*inner_product(u, b, rows, k);
+
+		for (i = k; i < rows; i ++)
+			b[i] -= factor*u[i - k];
+	}
+	free(u);
+}
+
+void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
+	update_vector(b, QR, rows, columns, gamma);
+	backrow(QR, b, columns);
+}
 
 double generating_Q(int n, double **A, int k, double *gamma) {
 	double max, norm2;
@@ -104,7 +147,7 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
-	gamma[k] = A[k][k];
+	/*gamma[k] = A[k][k];*/
 }
 
 /* ****************************************************************************** */
@@ -134,13 +177,18 @@ int main() {
 		fscanf(file, "%d %d", &i, &j);
 		fscanf(file, "%lf", &A[i][j]);
 	}
-	/*
+	
 	for (k= 0; k < n; k ++) {
 		fscanf(file, "%d", &i);
 		fscanf(file, "%lf", &b[i]);
 	}
-	*/
+	
 	QR_decomposition(A, gamma, n, m);
+	solve_QR_system(A, n, m, b, gamma);
+	
+	for (k = 0; k < n; k ++)
+		printf("%f ", b[k]);
+	printf("\n");
 	/* TESTE */
 	/*b[0] = 1;
 	for (k = 0; k < n; k ++)
