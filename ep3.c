@@ -79,8 +79,8 @@ void print_matrix(int rows, int columns, double **A){
 }
 
 void free_matrix(int rows, double **mat){
-    int i=0;
-    for(i=0;i<rows;i++)    
+    int i = 0;
+    for(i = 0; i < rows; i ++)    
         free(mat[i]);
     free(mat);
 }
@@ -104,9 +104,9 @@ void update_vector(double *b, double **Q, int rows, int columns, double *gamma) 
 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
 	int k;
-	update_vector(b, QR, rows, columns, gamma);
 	print_matrix(rows, columns, QR);
-	for (k = 0; k < n; k ++)
+	update_vector(b, QR, rows, columns, gamma);
+	for (k = 0; k < rows; k ++)
 		printf("%f ", b[k]);
 	printf("\n");
 	backrow(QR, b, columns);
@@ -119,10 +119,10 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 	norm2 = 0;
 
 	for (i = k; i < n; i ++)
-		if (A[i][k] > max)
-			max = A[i][k];
+		if (fabs(A[i][k]) > max)
+			max = fabs(A[i][k]);
 
-	if (max < E && max > -E) {
+	if (max < E) {
 		gamma[k] = 0;
 		return -1;
 	}
@@ -152,7 +152,6 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
-	/*gamma[k] = A[k][k];*/
 }
 
 /* ****************************************************************************** */
