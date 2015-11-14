@@ -103,7 +103,12 @@ void update_vector(double *b, double **Q, int rows, int columns, double *gamma) 
 }
 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
+	int k;
 	update_vector(b, QR, rows, columns, gamma);
+	print_matrix(rows, columns, QR);
+	for (k = 0; k < n; k ++)
+		printf("%f ", b[k]);
+	printf("\n");
 	backrow(QR, b, columns);
 }
 
