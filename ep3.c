@@ -103,12 +103,7 @@ void update_vector(double *b, double **Q, int rows, int columns, double *gamma) 
 }
 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
-	int k;
-	print_matrix(rows, columns, QR);
 	update_vector(b, QR, rows, columns, gamma);
-	for (k = 0; k < rows; k ++)
-		printf("%f ", b[k]);
-	printf("\n");
 	backrow(QR, b, columns);
 }
 
@@ -174,10 +169,10 @@ int main() {
 	fscanf(file, "%d", &m);
 	A = alloc_matrix(n, m);
 	b = malloc(n * sizeof(double));
-	gamma = malloc(n * sizeof(double));
+	gamma = malloc(m * sizeof(double));
 
 
-	for (k = 0; k < n*n; k ++) {
+	for (k = 0; k < n*m; k ++) {
 		fscanf(file, "%d %d", &i, &j);
 		fscanf(file, "%lf", &A[i][j]);
 	}
@@ -186,10 +181,15 @@ int main() {
 		fscanf(file, "%d", &i);
 		fscanf(file, "%lf", &b[i]);
 	}
-	
+	/*matriz e vetor de entrada*/
+	print_matrix(n, m, A);
+	for (k = 0; k < n; k ++)
+		printf("%f ", b[k]);
+	printf("\n");
 	QR_decomposition(A, gamma, n, m);
 	solve_QR_system(A, n, m, b, gamma);
-	
+	/*vetor de resposta em b*/
+	/*IMPORTANTE: so posso fazer isso pois o sistema e sobre-determinado*/
 	for (k = 0; k < n; k ++)
 		printf("%f ", b[k]);
 	printf("\n");
