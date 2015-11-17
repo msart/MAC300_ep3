@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
-#define nmax 700
 #define E 0.0001 /*erro*/
 
 /*
@@ -17,7 +16,32 @@ int forwrow(int n, double A[][nmax], double b[]) {
 	return 0;
 }
 */
-void QR_decomposition(int n, double A[][nmax], int i, double gama[]) {
+double **alloc_matrix(int rows, int cols) {
+    double **mat = (double **) malloc(sizeof(double *)*rows);
+    for(i=0; i<rows; i++)
+        mat[i] = (double *) malloc(sizeof(double)*cols);
+    return mat;
+} 
+
+void print_matrix(int rows, int cols, double **mat){
+    int i=0,j=0;
+  for(i=0; i<rows; i++){    /* Iterate of each row */
+        for(j=0; j<cols; j++){  /* In each row, go over each col element  */
+            printf("%lf ",mat[i][j]); /* Print each row element */
+        }
+        printf("\n");
+    }
+}
+
+void free_matrix(int rows, double **mat){
+    int i=0;
+    for(i=0;i<rows;i++)    
+        free(mat[i]);
+    free(mat);
+}
+
+
+void QR_decomposition(int n, double **A, int i, double *gama) {
 	double max, norm2;
 	int j;
 	max = 0;
@@ -25,7 +49,7 @@ void QR_decomposition(int n, double A[][nmax], int i, double gama[]) {
 	for (j = 0; j < n; j++)
 		if (A[i][j] > max)
 			max = A[i][j];
-		
+
 	if (max == 0)
 		gama[i] = 0;
 	else {		
@@ -48,8 +72,8 @@ void QR_decomposition(int n, double A[][nmax], int i, double gama[]) {
 int main() {
 	char file_name[100];
 	FILE *file;
-	double A[nmax][nmax], b[nmax], duration;
-	int n, i, j, k;
+	double **A, *b, *gama, duration;
+	int n, m, i, j, k;
 	clock_t start, end;
 
 	printf("Nome do Arquivo: ");
@@ -61,6 +85,12 @@ int main() {
 	}
 
 	fscanf(file, "%d", &n);
+	fscanf(file, "%d", &m);
+	A = alloc_matrix(n, m);
+	b = malloc(n * sizeof(double));
+	gama = malloc(n * sizeof(double));
+
+
 	for (k = 0; k < n*n; k ++) {
 		fscanf(file, "%d %d", &i, &j);
 		fscanf(file, "%lf", &A[i][j]);
@@ -73,6 +103,10 @@ int main() {
 	start = clock();
 	end = clock();
 	duration = (double)(end - start) / CLOCKS_PER_SEC;
+
+	free(b);
+	free(gama);
+	free_matrix(n, A);
 
 	return 0;
 }
