@@ -22,8 +22,10 @@ void vector_times_matrix(double *v, double **A, int size, int k) {
 	free(aux);
 }
 
-void update_matrix(double *v, double **A, double *gamma, int size, int k) {
+void update_matrix(double **A, double *gamma, int size, int k) {
 	int i, j;
+	double *v;
+	v = malloc(size * sizeof(double));
 
 	for (i = k + 1; i < size; i ++)
 		v[i] = A[i][k]*gamma[k];
@@ -33,6 +35,7 @@ void update_matrix(double *v, double **A, double *gamma, int size, int k) {
 	for (i = k; i < size; i ++)
 		for (j = k + 1; j < size; j ++)
 			A[i][j] -= A[i][k]*v[j];
+	free(v);
 }
 
 double **alloc_matrix(int rows, int cols) {
@@ -62,7 +65,7 @@ void free_matrix(int rows, double **mat){
 }
 
 
-double QR_decomposition(int n, double **A, int k, double *gamma) {
+double generating_Q(int n, double **A, int k, double *gamma) {
 	double max, norm2;
 	int i;
 	max = 0;
@@ -77,9 +80,10 @@ double QR_decomposition(int n, double **A, int k, double *gamma) {
 		return -1;
 	}
 	else {		
-		for (i = 0; i < n; i ++)
+		for (i = 0; i < n; i ++) {
 			A[i][k] = A[i][k]/max;
 			norm2 += pow(A[i][k], 2);
+		}
 		norm2 = sqrt(norm2);
 		if(A[k][k] < 0)
 			norm2 = -norm2;
@@ -90,6 +94,14 @@ double QR_decomposition(int n, double **A, int k, double *gamma) {
 	}
 }
 
+void QR_decomposition(double **A, double *gamma, int n) {
+	int k;
+	for (k = 0; k < n - 1; k ++) {
+		A[k][k] = - generating_Q(n, A, k, gamma);
+		update_matrix(A, gamma, n, k);
+	}
+	gamma[n - 1] = A[n - 1][n - 1];
+}
 
 /* ****************************************************************************** */
 int main() {
@@ -118,15 +130,20 @@ int main() {
 		fscanf(file, "%d %d", &i, &j);
 		fscanf(file, "%lf", &A[i][j]);
 	}
+	/*
 	for (k= 0; k < n; k ++) {
 		fscanf(file, "%d", &i);
 		fscanf(file, "%lf", &b[i]);
 	}
+	*/
+	QR_decomposition(A, gamma, n);
 	/* TESTE */
+	print_matrix(n, m, A);
+	/*
 	start = clock();
 	end = clock();
 	duration = (double)(end - start) / CLOCKS_PER_SEC;
-
+	*/
 	free(b);
 	free(gamma);
 	free_matrix(n, A);
