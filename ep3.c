@@ -17,9 +17,32 @@ int forwrow(int n, double A[][nmax], double b[]) {
 	return 0;
 }
 */
-void QR_decomposition(int n, double A[][nmax], double b[]) {  /*pensar como vai ser por linha*/
+void QR_decomposition(int n, double A[][nmax], int i, double gama[]) {
+	double max, norm2;
+	int j;
+	max = 0;
+	norm2 = 0;
+	for (j = 0; j < n; j++)
+		if (A[i][j] > max)
+			max = A[i][j];
+		
+	if (max == 0)
+		gama[i] = 0;
+	else {		
+		for (j = 0; j < n; j++)
+			A[i][j] = A[i][j]/max;
+		for (j = 0; j < n; j++)
+			norm2 = pow(A[i][j], 2);
+		norm2 = sqrt(norm2);
+		if(A[i][0] > 0)
+			norm2 = -norm2;
+		A[i][0] = A[i][0] + norm2;
+		gama[i] = 1/(norm2 * A[i][0]);
+		gama[i] = gama[i] * max;
 
+	}
 }
+
 
 /* ****************************************************************************** */
 int main() {
