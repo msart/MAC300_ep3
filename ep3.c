@@ -50,7 +50,7 @@ void QR_decomposition(int n, double **A, int i, double *gama) {
 		if (A[i][j] > max)
 			max = A[i][j];
 
-	if (max == 0)
+	if (max < E && max > -E)
 		gama[i] = 0;
 	else {		
 		for (j = 0; j < n; j++)
