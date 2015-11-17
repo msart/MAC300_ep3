@@ -83,7 +83,7 @@ double QR_decomposition(int n, double **A, int k, double *gama) {
 		if (A[i][k] > max)
 			max = A[i][k];
 
-	if (max == 0)
+	if (max < E && max > -E)
 		gama[k] = 0;
 	else {		
 		for (i = 0; i < n; i ++)
