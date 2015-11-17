@@ -16,6 +16,38 @@ int forwrow(int n, double A[][nmax], double b[]) {
 	return 0;
 }
 */
+
+void vector_times_matrix(double *v, double **A, int size, int k) {
+	double *aux;
+	size_on_k = size - k; /*size of vector u on step k */
+	aux = (double*) malloc(size_on_k*sizeof(double));
+	for (j = 0; j < size_on_k; j ++)
+		aux[i] = 0;
+
+	for (i = k; i < size; i ++)
+		for (j = k + 1; j < size; j ++)
+			aux[j - k - 1] += v[i]*A[i][j];
+
+	for (j = 0; j < size_on_k; j ++)
+		v[j + k] = aux[j];
+
+	free(aux);
+}
+
+void update_matrix(double *v, double **A, double *y, int size, int k) {
+	int i;
+
+	for (i = k + 1; i < size; i ++)
+		v[i] = A[i][k]*y[k];
+
+	vector_times_matrix(v, A, size, k);
+
+	for (i = k; i < size; i ++)
+		A[i][j] -= A[i][k]*v[j]
+		for (j = k + 1; j < size; j ++)
+			A[i][j] -= A[i][k]*v[j]
+}
+
 double **alloc_matrix(int rows, int cols) {
     double **mat = (double **) malloc(sizeof(double *)*rows);
     for(i=0; i<rows; i++)
@@ -41,29 +73,29 @@ void free_matrix(int rows, double **mat){
 }
 
 
-void QR_decomposition(int n, double **A, int i, double *gama) {
+double QR_decomposition(int n, double **A, int k, double *gama) {
 	double max, norm2;
 	int j;
 	max = 0;
 	norm2 = 0;
-	for (j = 0; j < n; j++)
-		if (A[i][j] > max)
-			max = A[i][j];
+
+	for (i = 0; i < n; i ++)
+		if (A[i][k] > max)
+			max = A[i][k];
 
 	if (max == 0)
-		gama[i] = 0;
+		gama[k] = 0;
 	else {		
-		for (j = 0; j < n; j++)
-			A[i][j] = A[i][j]/max;
-		for (j = 0; j < n; j++)
-			norm2 = pow(A[i][j], 2);
+		for (i = 0; i < n; i ++)
+			A[i][k] = A[i][k]/max;
+			norm2 += pow(A[i][k], 2);
 		norm2 = sqrt(norm2);
-		if(A[i][0] > 0)
+		if(A[k][k] < 0)
 			norm2 = -norm2;
-		A[i][0] = A[i][0] + norm2;
-		gama[i] = 1/(norm2 * A[i][0]);
-		gama[i] = gama[i] * max;
-
+		A[k][k] = A[k][k] + norm2;
+		gama[k] = 1/(norm2 * A[k][k]);
+		A[k][k] = 1
+		return (norm2 * max);
 	}
 }
 
