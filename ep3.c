@@ -4,37 +4,36 @@
 #include <stdlib.h>
 #define E 0.0001 /*error*/
 
-void vector_times_matrix(double *v, double **A, int size, int k) {
+void vector_times_matrix(double *v, double **A, int rows, int columns, int k) {
 	double *aux;
-	int size_on_k, i, j;
-	size_on_k = size - k; /*size of vector u on step k */
-	aux = (double*) malloc(size_on_k*sizeof(double));
-	for (j = 0; j < size_on_k; j ++)
+	int i, j;
+	aux = (double*) malloc((columns - k - 1)*sizeof(double));
+	for (j = 0; j < (columns - k - 1); j ++)
 		aux[j] = 0;
 
-	for (i = k; i < size; i ++)
-		for (j = k + 1; j < size; j ++)
-			aux[j - k - 1] += v[i]*A[i][j];
+	for (i = k; i < rows; i ++)
+		for (j = k + 1; j < columns; j ++)
+			aux[j - k - 1] += v[i - k]*A[i][j];
 
-	for (j = 0; j < size_on_k; j ++)
-		v[j + k] = aux[j];
+	for (j = 0; j < (columns - k - 1); j ++)
+		v[j] = aux[j];                       /* possible as the system is overdetermined */
 
 	free(aux);
 }
 
-void update_matrix(double **A, double *gamma, int size, int k) {
+void update_matrix(double **A, double *gamma, int rows, int columns, int k) {
 	int i, j;
 	double *v;
-	v = malloc(size * sizeof(double));
+	v = malloc((rows - k) * sizeof(double));
 
-	for (i = k + 1; i < size; i ++)
-		v[i] = A[i][k]*gamma[k];
+	for (i = k; i < rows; i ++)
+		v[i - k] = A[i][k]*gamma[k];
 
-	vector_times_matrix(v, A, size, k);
+	vector_times_matrix(v, A, rows, columns, k);
 
-	for (i = k; i < size; i ++)
-		for (j = k + 1; j < size; j ++)
-			A[i][j] -= A[i][k]*v[j];
+	for (i = k; i < rows; i ++)
+		for (j = k + 1; j < columns; j ++)
+			A[i][j] -= A[i][k]*v[j - k - 1];
 	free(v);
 }
 
@@ -71,7 +70,7 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 	max = 0;
 	norm2 = 0;
 
-	for (i = 0; i < n; i ++)
+	for (i = k; i < n; i ++)
 		if (A[i][k] > max)
 			max = A[i][k];
 
@@ -80,7 +79,7 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 		return -1;
 	}
 	else {		
-		for (i = 0; i < n; i ++) {
+		for (i = k; i < n; i ++) {
 			A[i][k] = A[i][k]/max;
 			norm2 += pow(A[i][k], 2);
 		}
@@ -88,19 +87,28 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 		if(A[k][k] < 0)
 			norm2 = -norm2;
 		A[k][k] = A[k][k] + norm2;
-		gamma[k] = 1/(norm2 * A[k][k]);
+		gamma[k] = A[k][k]/(norm2);
+		for (i = k + 1; i < n; i ++) {
+			A[i][k] = A[i][k]/A[k][k];
+		}
 		A[k][k] = 1;
 		return (norm2 * max);
 	}
 }
 
-void QR_decomposition(double **A, double *gamma, int n) {
+void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 	int k;
-	for (k = 0; k < n - 1; k ++) {
-		A[k][k] = - generating_Q(n, A, k, gamma);
-		update_matrix(A, gamma, n, k);
+	double t;
+	for (k = 0; k < columns - 1; k ++) {
+		print_matrix(rows, columns, A);
+		printf("\n");
+		t = generating_Q(rows, A, k, gamma);
+		print_matrix(rows, columns, A);
+		printf("\n");
+		update_matrix(A, gamma, rows, columns, k);
+		A[k][k] = -t;
 	}
-	gamma[n - 1] = A[n - 1][n - 1];
+	gamma[k] = A[k][k];
 }
 
 /* ****************************************************************************** */
@@ -136,9 +144,19 @@ int main() {
 		fscanf(file, "%lf", &b[i]);
 	}
 	*/
-	QR_decomposition(A, gamma, n);
-	/* TESTE */
+	QR_decomposition(A, gamma, n, m);
 	print_matrix(n, m, A);
+	printf("\n");
+	/* TESTE */
+	/*b[0] = 1;
+	for (k = 0; k < n; k ++)
+		printf("%f ", b[k]);
+	printf("\n");
+	print_matrix(n, m, A);
+	vector_times_matrix(b, A, n, m, 0);
+	for (k = 0; k < m; k ++)
+		printf("%f ", b[k]);
+	printf("\n");*/
 	/*
 	start = clock();
 	end = clock();
