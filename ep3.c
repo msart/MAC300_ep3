@@ -99,12 +99,8 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 	int k;
 	double t;
-	for (k = 0; k < columns - 1; k ++) {
-		print_matrix(rows, columns, A);
-		printf("\n");
+	for (k = 0; k < columns; k ++) {
 		t = generating_Q(rows, A, k, gamma);
-		print_matrix(rows, columns, A);
-		printf("\n");
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
@@ -145,8 +141,6 @@ int main() {
 	}
 	*/
 	QR_decomposition(A, gamma, n, m);
-	print_matrix(n, m, A);
-	printf("\n");
 	/* TESTE */
 	/*b[0] = 1;
 	for (k = 0; k < n; k ++)
