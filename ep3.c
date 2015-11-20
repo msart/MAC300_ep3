@@ -4,14 +4,6 @@
 #include <stdlib.h>
 #define E 0.0001 /*error*/
 
-void swap(double* a, double* b) {
-	double temp;
-	temp = *a;
-	*a = *b;
-	*b = temp;
-}
-
-
 double inner_product(double *v1, double *v2, int rows, int k) {
 	int i;
 	double inner_product = 0;
@@ -93,108 +85,67 @@ void free_matrix(int rows, double **mat){
     free(mat);
 }
 
+void update_vector(double *b, double **Q, int rows, int columns, double *gamma) {
+	int i, k;
+	double *u, factor;
+	u = malloc((rows) * sizeof(double));
+	for (k = 0; k < columns; k ++) {
+		u[0] = 1;
+		for (i = k + 1; i < rows; i ++)
+			u[i - k] = Q[i][k];
+	
+		factor = gamma[k]*inner_product(u, b, rows, k);
+
+		for (i = k; i < rows; i ++)
+			b[i] -= factor*u[i - k];
+	}
+	free(u);
+}
 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
 	update_vector(b, QR, rows, columns, gamma);
 	backrow(QR, b, columns);
 }
 
-void update_norms_vector(double **A, int rows, int columns, double *norms, int k) {
-	int i, j;
-	double *max_columns;
-	max_columns = malloc(columns*sizeof(double));
-	if (k == 0) {
-		for (j = k; j < columns; j ++) {
-			norms[j] = 0;
-			max_columns[j] = 0;
-			for (i = k; i < rows; i ++)
-				if (fabs(A[i][j]) > max_columns[j])
-					max_columns[j] = fabs(A[i][j]);
-		}
-		
-		for (i = 0; i < rows; i ++)
-			for (j = 0; j < columns; j ++)
-				norms[j] += (A[i][j]/max_columns[j])*(A[i][j]/max_columns[j]);
-	}
-	else {
-		for (j = k; j < columns, j ++)
-			norms[j] -= A[k - 1][j]*A[k - 1][j]; 
-	}
-}
-
-double norm2(int n, int m, double **A, double *norms) {
-	double max, norm2;
-	int i, j, maxc;
-	
-	for(j = 0; j < m; j++) {
-		max = norm2 = 0;
-		for (i = k; i < n; i ++)
-			if (fabs(A[i][j]) > max)
-				max = fabs(A[i][j]);
-
-		if (max < E)
-			norms[j] = 0;
-		else {
-			for (i = k; i < n; i ++) {
-				A[i][k] = A[i][k]/max;
-				norm2 += pow(A[i][k], 2);
-			}
-			norms[j] = norm2
-		}
-	}
-}
-
-void generating_Q(int n, double **A, int k, double *gamma, double *norms) {
+double generating_Q(int n, double **A, int k, double *gamma) {
 	double max, norm2;
 	int i;
 	max = 0;
 	norm2 = 0;
-	for(i = 0; i < n; i++)
-		if(fabs(A[i][k]) > max)
-			max = A[i][k];
+
+	for (i = k; i < n; i ++)
+		if (fabs(A[i][k]) > max)
+			max = fabs(A[i][k]);
+
 	if (max < E) {
 		gamma[k] = 0;
-		return -1
+		return -1;
 	}
-	else {
-		norm2 = sqrt(norms[k]);
+	else {		
+		for (i = k; i < n; i ++) {
+			A[i][k] = A[i][k]/max;
+			norm2 += pow(A[i][k], 2);
+		}
+		norm2 = sqrt(norm2);
 		if(A[k][k] < 0)
 			norm2 = -norm2;
 		A[k][k] = A[k][k] + norm2;
-		gamma[k] = A[k][k]/norm2;
-	 	for (i = k + 1; i < n; i ++) {
-	 		A[i][k] = A[i][k]/A[k][k];
-	 	}
-	 	A[k][k] = 1;
+		gamma[k] = A[k][k]/(norm2);
+		for (i = k + 1; i < n; i ++) {
+			A[i][k] = A[i][k]/A[k][k];
+		}
+		A[k][k] = 1;
 		return (norm2 * max);
 	}
 }
 
-void permute(double **A, int *permutation, int k, int rows) {
-	int i;
-	for(i = 0; i < rows; i++) 
-		swap(A[i][k], A[i][permutation]);
-}
-
-void QR_decomposition(double **A, double *gamma, double *norms, int rows, int columns, int *permutation) {
-	int k, i, max_norm2_column;
-	double t, max, *norms;
-	norms = malloc(columns*sizeof(double));
-	
-	norm2(rows, columns, A, gamma);
-
+void QR_decomposition(double **A, double *gamma, int rows, int columns) {
+	int k;
+	double t;
 	for (k = 0; k < columns; k ++) {
-		max = 0;
-		for (i = 0; i < columns; i++) {
-			if(fabs(norms[i]) > max)
-				max_norm2_column = i; 
-		}
-		permutation[k] = i;
-		permute(A, permutation, k, rows);
-		t = generating_Q(rows, A, k, gamma, norms);
+		t = generating_Q(rows, A, k, gamma);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
-
 	}
 }
 
@@ -202,8 +153,8 @@ void QR_decomposition(double **A, double *gamma, double *norms, int rows, int co
 int main() {
 	char file_name[100];
 	FILE *file;
-	double **A, *b, *gamma, duration, *norms;
-	int n, m, i, j, k, *permutation;
+	double **A, *b, *gamma, duration;
+	int n, m, i, j, k;
 	clock_t start, end;
 
 	printf("Nome do Arquivo: ");
@@ -218,10 +169,8 @@ int main() {
 	fscanf(file, "%d", &m);
 	A = alloc_matrix(n, m);
 	b = malloc(n * sizeof(double));
-	permutation = malloc (m * sizeof(int));
-	for(k = 0; k < m; k++)
-		permutation[k] = k;
 	gamma = malloc(m * sizeof(double));
+
 
 	for (k = 0; k < n*m; k ++) {
 		fscanf(file, "%d %d", &i, &j);
@@ -261,8 +210,6 @@ int main() {
 	*/
 	free(b);
 	free(gamma);
-	free(permutation);
-	free(norms);
 	free_matrix(n, A);
 
 	return 0;
