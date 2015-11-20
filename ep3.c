@@ -107,7 +107,7 @@ void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamm
 	backrow(QR, b, columns);
 }
 
-double generating_Q(int n, double **A, int k, double *gamma) {
+double generating_Q(double **A, int n, int k, double *gamma) {
 	double max, norm2;
 	int i;
 	max = 0;
@@ -139,23 +139,61 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 	}
 }
 
-void QR_decomposition(double **A, double *gamma, int rows, int columns) {
+void update_norms_vector(double **A, int rows, int columns, double *norms, int k) {
+	int i, j;
+	if (k == 0) {
+		for (j = k; j < columns; j ++) {
+			norms[j] = 0;
+		}
+		
+		for (i = 0; i < rows; i ++)
+			for (j = 0; j < columns; j ++)
+				norms[j] += A[i][j]*A[i][j];
+	}
+	else {
+		for (j = k; j < columns; j ++)
+			norms[j] -= pow(A[k - 1][j], 2); 
+	}
+}
+
+void permute(double **A, int rows, int columns, int *permutation, double *norms, int k) {
+	int i, j, column_with_max_norm;
+	double swap;
+	for (j = k; j < columns; j ++)
+			if(norms[j] > norms[column_with_max_norm])
+				column_with_max_norm = j;
+	
+	permutation[k] = j;
+	permutation[j] = k;	
+	
+	for(i = 0; i < rows; i++) 
+		swap = A[i][k];
+		A[i][k] = A[i][j];
+		A[i][j] = swap;
+}
+
+void QR_decomposition(double **A, double *gamma, int rows, int columns, int *permutation) {
 	int k;
-	double t;
+	double t, *norms;
+	norms = malloc(columns*sizeof(double));
+
 	for (k = 0; k < columns; k ++) {
-		t = generating_Q(rows, A, k, gamma);
+		update_norms_vector(A, rows, columns, norms, k);
+		permute(A, rows, columns, permutation, norms, k);
+		t = generating_Q(A, rows, k, gamma);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
+	
+	free(norms);
 }
 
 /* ****************************************************************************** */
 int main() {
 	char file_name[100];
 	FILE *file;
-	double **A, *b, *gamma, duration;
-	int n, m, i, j, k;
-	clock_t start, end;
+	double **A, *b, *gamma;
+	int n, m, i, j, k, *permutation;
 
 	printf("Nome do Arquivo: ");
 	scanf("%s", file_name);
@@ -170,7 +208,9 @@ int main() {
 	A = alloc_matrix(n, m);
 	b = malloc(n * sizeof(double));
 	gamma = malloc(m * sizeof(double));
-
+	permutation = malloc (m * sizeof(int));
+	for(k = 0; k < m; k++)
+		permutation[k] = k;
 
 	for (k = 0; k < n*m; k ++) {
 		fscanf(file, "%d %d", &i, &j);
@@ -186,7 +226,7 @@ int main() {
 	for (k = 0; k < n; k ++)
 		printf("%f ", b[k]);
 	printf("\n");
-	QR_decomposition(A, gamma, n, m);
+	QR_decomposition(A, gamma, n, m, permutation);
 	solve_QR_system(A, n, m, b, gamma);
 	/*vetor de resposta em b*/
 	/*IMPORTANTE: so posso fazer isso pois o sistema e sobre-determinado*/
@@ -211,6 +251,7 @@ int main() {
 	free(b);
 	free(gamma);
 	free_matrix(n, A);
+	free(permutation);
 
 	return 0;
 }
