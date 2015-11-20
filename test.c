@@ -186,6 +186,7 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 		A[k][k] = -t;
 		update_matrix(A, gamma, rows, columns, k);
 	}
+	free(norms);
 }
 
 /* ****************************************************************************** */
