@@ -99,9 +99,33 @@ void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamm
 	backrow(QR, b, columns);
 }
 
+void update_norms_vector(double **A, int rows, int columns, double *norms, int k) {
+	int i, j;
+	double *max_columns;
+	max_columns = malloc(columns*sizeof(double));
+	if (k == 0) {
+		for (j = k; j < columns; j ++) {
+			norms[j] = 0;
+			max_columns[j] = 0;
+			for (i = k; i < rows; i ++)
+				if (fabs(A[i][j]) > max_columns[j])
+					max_columns[j] = fabs(A[i][j]);
+		}
+		
+		for (i = 0; i < rows; i ++)
+			for (j = 0; j < columns; j ++)
+				norms[j] += (A[i][j]/max_columns[j])*(A[i][j]/max_columns[j]);
+	}
+	else {
+		for (j = k; j < columns, j ++)
+			norms[j] -= A[k - 1][j]*A[k - 1][j]; 
+	}
+}
+
 double norm2(int n, int m, double **A, double *norms) {
 	double max, norm2;
 	int i, j, maxc;
+	
 	for(j = 0; j < m; j++) {
 		max = norm2 = 0;
 		for (i = k; i < n; i ++)
@@ -154,13 +178,15 @@ void permute(double **A, int *permutation, int k, int rows) {
 
 void QR_decomposition(double **A, double *gamma, double *norms, int rows, int columns, int *permutation) {
 	int k, i, max_norm2_column;
-	double t, max;
+	double t, max, *norms;
+	norms = malloc(columns*sizeof(double));
+	
 	norm2(rows, columns, A, gamma);
 
 	for (k = 0; k < columns; k ++) {
 		max = 0;
 		for (i = 0; i < columns; i++) {
-			if( fabs(norms[i]) > max)
+			if(fabs(norms[i]) > max)
 				max_norm2_column = i; 
 		}
 		permutation[k] = i;
@@ -196,8 +222,6 @@ int main() {
 	for(k = 0; k < m; k++)
 		permutation[k] = k;
 	gamma = malloc(m * sizeof(double));
-	norms = malloc(m * sizeof(double));
-
 
 	for (k = 0; k < n*m; k ++) {
 		fscanf(file, "%d %d", &i, &j);
