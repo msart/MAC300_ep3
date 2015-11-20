@@ -134,7 +134,7 @@ double norm2(int n, int m, double **A, double *gamma) {
 			norm2 = sqrt(norm2);
 			if(A[k][k] < 0)
 				norm2 = -norm2;
-			gamma[j] = norm2;
+			gamma[j] = norm2 * max;
 		}
 	}
 }
