@@ -93,50 +93,10 @@ void free_matrix(int rows, double **mat){
     free(mat);
 }
 
-void update_vector(double *b, double **Q, int rows, int columns, double *gamma) {
-	int i, k;
-	double *u, factor;
-	u = malloc((rows) * sizeof(double));
-	for (k = 0; k < columns; k ++) {
-		u[0] = 1;
-		for (i = k + 1; i < rows; i ++)
-			u[i - k] = Q[i][k];
-	
-		factor = gamma[k]*inner_product(u, b, rows, k);
-
-		for (i = k; i < rows; i ++)
-			b[i] -= factor*u[i - k];
-	}
-	free(u);
-}
 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
 	update_vector(b, QR, rows, columns, gamma);
 	backrow(QR, b, columns);
-}
-
-double norm2(int n, int m, double **A, double *gamma) {
-	double max, norm2;
-	int i, j, maxc;
-	for(j = 0; j < m; j++) {
-		max = norm2 = 0;
-		for (i = k; i < n; i ++)
-			if (fabs(A[i][j]) > max)
-				max = fabs(A[i][j]);
-
-		if (max < E)
-			gamma[j] = 0;
-		else {
-			for (i = k; i < n; i ++) {
-				A[i][k] = A[i][k]/max;
-				norm2 += pow(A[i][k], 2);
-			}
-			norm2 = sqrt(norm2);
-			if(A[k][k] < 0)
-				norm2 = -norm2;
-			gamma[j] = norm2 * max;
-		}
-	}
 }
 
 double generating_Q(int n, double **A, int k, double *gamma) {
@@ -171,9 +131,26 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 	}
 }
 
+void update_norms_vector(double **A, int rows, int columns, double *norms, int k) {
+	int i, j;
+	if (k == 0) {
+		for (j = 0; j < columns; j ++) {
+			norms[j] = 0;
+		}
+		
+		for (i = 0; i < rows; i ++)
+			for (j = 0; j < columns; j ++)
+				norms[j] += A[i][j]*A[i][j];
+	}
+	else {
+		for (j = k; j < columns, j ++)
+			norms[j] -= A[k - 1][j]*A[k - 1][j]; 
+	}
+}
+
 void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 	int k;
-	double t;
+	double t, *column_norms;
 	for (k = 0; k < columns; k ++) {
 		t = generating_Q(rows, A, k, gamma);
 		update_matrix(A, gamma, rows, columns, k);
