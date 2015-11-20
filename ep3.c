@@ -99,9 +99,6 @@ void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamm
 	backrow(QR, b, columns);
 }
 
-<<<<<<< HEAD
-double generating_Q(int n, double **A, int k, double *gamma) {
-=======
 double norm2(int n, int m, double **A, double *norms) {
 	double max, norm2;
 	int i, j, maxc;
@@ -124,7 +121,6 @@ double norm2(int n, int m, double **A, double *norms) {
 }
 
 void generating_Q(int n, double **A, int k, double *gamma, double *norms) {
->>>>>>> c6bf95b29bcaca7cd40e0e6858c5506391586c37
 	double max, norm2;
 	int i;
 	max = 0;
