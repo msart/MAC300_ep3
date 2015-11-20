@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #define E 0.0001 /*error*/
 
+void swap(double* a, double* b) {
+	double temp;
+	temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+
 double inner_product(double *v1, double *v2, int rows, int k) {
 	int i;
 	double inner_product = 0;
@@ -105,6 +113,30 @@ void update_vector(double *b, double **Q, int rows, int columns, double *gamma) 
 void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamma) {
 	update_vector(b, QR, rows, columns, gamma);
 	backrow(QR, b, columns);
+}
+
+double norm2(int n, int m, double **A, double *gamma) {
+	double max, norm2;
+	int i, j, maxc;
+	for(j = 0; j < m; j++) {
+		max = norm2 = 0;
+		for (i = k; i < n; i ++)
+			if (fabs(A[i][j]) > max)
+				max = fabs(A[i][j]);
+
+		if (max < E)
+			gamma[j] = 0;
+		else {
+			for (i = k; i < n; i ++) {
+				A[i][k] = A[i][k]/max;
+				norm2 += pow(A[i][k], 2);
+			}
+			norm2 = sqrt(norm2);
+			if(A[k][k] < 0)
+				norm2 = -norm2;
+			gamma[j] = A[i][i]/norm2 + 1;
+		}
+	}
 }
 
 double generating_Q(int n, double **A, int k, double *gamma) {
