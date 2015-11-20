@@ -115,7 +115,7 @@ void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamm
 	backrow(QR, b, columns);
 }
 
-double norm2(int n, int m, double **A, double *gamma) {
+double norm2(int n, int m, double **A, double *norms) {
 	double max, norm2;
 	int i, j, maxc;
 	for(j = 0; j < m; j++) {
@@ -125,57 +125,54 @@ double norm2(int n, int m, double **A, double *gamma) {
 				max = fabs(A[i][j]);
 
 		if (max < E)
-			gamma[j] = 0;
+			norms[j] = 0;
 		else {
 			for (i = k; i < n; i ++) {
 				A[i][k] = A[i][k]/max;
 				norm2 += pow(A[i][k], 2);
 			}
-			norm2 = sqrt(norm2);
 			if(A[k][k] < 0)
 				norm2 = -norm2;
-			gamma[j] = norm2 * max;
+			norms[j] = norm2 * max;
 		}
 	}
 }
 
-double generating_Q(int n, double **A, int k, double *gamma) {
+void generating_Q(int n, double **A, int k, double *gamma, double *norms) {
 	double max, norm2;
 	int i;
 	max = 0;
-	norm2 = 0;
 
 	for (i = k; i < n; i ++)
-		if (fabs(A[i][k]) > max)
-			max = fabs(A[i][k]);
-
-	if (max < E) {
-		gamma[k] = 0;
-		return -1;
-	}
-	else {		
-		for (i = k; i < n; i ++) {
-			A[i][k] = A[i][k]/max;
-			norm2 += pow(A[i][k], 2);
-		}
-		norm2 = sqrt(norm2);
-		if(A[k][k] < 0)
-			norm2 = -norm2;
-		A[k][k] = A[k][k] + norm2;
-		gamma[k] = A[k][k]/(norm2);
+		A[k][k] = A[k][k] + norms[k];
+		gamma[k] = A[k][k]/(norms[k]);
 		for (i = k + 1; i < n; i ++) {
 			A[i][k] = A[i][k]/A[k][k];
 		}
 		A[k][k] = 1;
-		return (norm2 * max);
 	}
 }
 
-void QR_decomposition(double **A, double *gamma, int rows, int columns) {
-	int k;
-	double t;
+void permute(double **A, int *permutation, int k, int rows) {
+	int i;
+	for(i = 0; i < rows; i++) 
+		swap(A[i][k], A[i][permutation]);
+}
+
+void QR_decomposition(double **A, double *gamma, double *norms, int rows, int columns, int *permutation) {
+	int k, i, max_norm2_column;
+	double t, max;
+	norm2(rows, columns, A, gamma);
 	for (k = 0; k < columns; k ++) {
-		t = generating_Q(rows, A, k, gamma);
+		max = 0;
+		for (i = 0; i < columns; i++) {
+			if( fabs(norms[i]) > max)
+				max_norm2_column = i; 
+		}
+		permutation[k] = i;
+		permute(A, permutation, k, rows);
+		t = norms[k];
+		generating_Q(rows, A, k, gamma, norms);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
@@ -185,8 +182,8 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns) {
 int main() {
 	char file_name[100];
 	FILE *file;
-	double **A, *b, *gamma, duration;
-	int n, m, i, j, k;
+	double **A, *b, *gamma, duration, *norms;
+	int n, m, i, j, k, *permutation;
 	clock_t start, end;
 
 	printf("Nome do Arquivo: ");
@@ -201,7 +198,11 @@ int main() {
 	fscanf(file, "%d", &m);
 	A = alloc_matrix(n, m);
 	b = malloc(n * sizeof(double));
+	permutation = malloc (m * sizeof(int));
+	for(k = 0; k < m; k++)
+		permutation[k] = k;
 	gamma = malloc(m * sizeof(double));
+	norms = malloc(m * sizeof(double));
 
 
 	for (k = 0; k < n*m; k ++) {
@@ -242,6 +243,8 @@ int main() {
 	*/
 	free(b);
 	free(gamma);
+	free(permutation);
+	free(norms);
 	free_matrix(n, A);
 
 	return 0;
