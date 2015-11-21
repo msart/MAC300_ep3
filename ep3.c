@@ -165,8 +165,7 @@ void permute(double **A, int rows, int columns, int *permutation, double *norms,
 			if(norms[j] > norms[column_with_max_norm])
 				column_with_max_norm = j;
 
-	permutation[k] = column_with_max_norm;
-	permutation[column_with_max_norm] = k;	
+	permutation[k] = column_with_max_norm;	
 	
 	for(i = 0; i < rows; i++) {
 		swap = A[i][k];
@@ -185,7 +184,6 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns, int *per
 		t = generating_Q(rows, A, k, gamma);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
-		update_matrix(A, gamma, rows, columns, k);
 	}
 	free(norms);
 }
@@ -215,8 +213,6 @@ int main() {
 	for(k = 0; k < m; k++)
 		permutation[k] = k;
 
-
-
 	for (k = 0; k < n*m; k ++) {
 		fscanf(file, "%d %d", &i, &j);
 		fscanf(file, "%lf", &A[i][j]);
@@ -226,18 +222,21 @@ int main() {
 		fscanf(file, "%d", &i);
 		fscanf(file, "%lf", &b[i]);
 	}
-	/*matriz e vetor de entrada*/
-	print_matrix(n, m, A);
-	for (k = 0; k < n; k ++)
-		printf("%f ", b[k]);
-	printf("\n");
 	QR_decomposition(A, gamma, n, m, permutation);
+
 	solve_QR_system(A, n, m, b, gamma);
+	
+	for (k = 0; k < m; k ++) {
+		double swap;
+		
+		swap = b[k];
+		b[k] = b[permutation[k]];
+		b[permutation[k]] = swap;
+	}
 	/*vetor de resposta em b*/
 	/*IMPORTANTE: so posso fazer isso pois o sistema e sobre-determinado*/
-
-	for (k = 0; k < m; k ++)
-		printf("%f ", b[k]);
+	for (n = 0; n < m; n ++)
+		printf("%f ", b[n]);
 	printf("\n");
 	/* TESTE */
 	/*b[0] = 1;
