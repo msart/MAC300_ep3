@@ -73,9 +73,7 @@ int main() {
 		printf("%d\n", y);
 		for(j = 0; j < m; j ++) {
 			A[i][j] = pow(y, m - j - 1);
-			printf("%f\n", A[i][j]);
 			b[i] += x[j] * A[i][j];
-			printf("%f\n\n", b[i]);
 		}
 	}
 
