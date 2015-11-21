@@ -124,7 +124,7 @@ double generating_Q(int n, double **A, int k, double *gamma, double *norms) {
 		t = 0;	
 		for (i = k; i < n; i ++)
 			A[i][k] = A[i][k]/max;
-		t = sqrt(norms[k])/max;
+		t = norms[k]/max;
 
 		if(A[k][k] < 0)
 			t = -t;
@@ -157,11 +157,14 @@ void update_norms_vector(double **A, int rows, int columns, double *norms, int k
 				norms[j] += pow(A[i][j]/max[j], 2);
 
 		for (j = 0; j< columns; j++)
-			norms[j] = norms[j] * max[j] * max[j];
+			norms[j] = sqrt(norms[j]) * max[j];
 	}
 	else {
-		for (j = k; j < columns; j ++)
-			norms[j] -= pow(A[k - 1][j]/max[j], 2) * max[j] * max[j];
+		for (j = k; j < columns; j ++){
+			norms[j] = pow(norms[j]/max[j], 2);
+			norms[j] -= pow(A[k - 1][j]/max[j], 2);
+			norms[j] = sqrt(norms[j]) * max[j];
+		}
 	}
 }
 
