@@ -192,9 +192,8 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns, int *per
 int main() {
 	char file_name[100];
 	FILE *file;
-	double **A, *b, *gamma, duration;
+	double **A, *b, *gamma, swap;
 	int n, m, i, j, k, *permutation;
-	clock_t start, end;
 
 	printf("Nome do Arquivo: ");
 	scanf("%s", file_name);
@@ -226,9 +225,7 @@ int main() {
 
 	solve_QR_system(A, n, m, b, gamma);
 	
-	for (k = 0; k < m; k ++) {
-		double swap;
-		
+	for (k = m - 1; k >= 0; k --) {
 		swap = b[k];
 		b[k] = b[permutation[k]];
 		b[permutation[k]] = swap;
