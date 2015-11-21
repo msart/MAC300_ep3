@@ -138,20 +138,30 @@ double generating_Q(int n, double **A, int k, double *gamma, double *norms) {
 	}
 }
 
-void update_norms_vector(double **A, int rows, int columns, double *norms, int k) {
+void update_norms_vector(double **A, int rows, int columns, double *norms, int k, double *max) {
 	int i, j;
 	if (k == 0) {
+
 		for (j = k; j < columns; j ++) {
-			norms[j] = 0;
+			norms[j] = max[j] = 0;
 		}
+
+		for (i = 0; i < rows; i ++)
+			for (j = 0; j < columns; j ++){
+				if (fabs(A[i][j]) > max[j])
+					max[j] = fabs(A[i][j]);
+			}
 		
 		for (i = 0; i < rows; i ++)
 			for (j = 0; j < columns; j ++)
-				norms[j] += A[i][j]*A[i][j];
+				norms[j] += pow(A[i][j]/max[j], 2);
+
+		for (j = 0; j< columns; j++)
+			norms[j] = norms[j] * max[j] * max[j];
 	}
 	else {
 		for (j = k; j < columns; j ++)
-			norms[j] -= pow(A[k - 1][j], 2);
+			norms[j] -= pow(A[k - 1][j]/max[j], 2) * max[j] * max[j];
 	}
 }
 
@@ -178,15 +188,17 @@ void permute(double **A, int rows, int columns, int *permutation, double *norms,
 
 void QR_decomposition(double **A, double *gamma, int rows, int columns, int *permutation) {
 	int k;
-	double t, *norms;
+	double t, *norms, *max;
 	norms = malloc(columns * sizeof(double));
+	max = malloc(columns * sizeof(double));
 	for (k = 0; k < columns; k ++) {
-		update_norms_vector(A, rows, columns, norms, k);
+		update_norms_vector(A, rows, columns, norms, k, max);
 		permute(A, rows, columns, permutation, norms, k);
 		t = generating_Q(rows, A, k, gamma, norms);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
+	free(max);
 	free(norms);
 }
 

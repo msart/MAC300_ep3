@@ -70,7 +70,6 @@ int main() {
 	for (i = 0; i < n; i ++) {
 		b[i] = 0;
 		y = rand() % 10;
-		printf("%d\n", y);
 		for(j = 0; j < m; j ++) {
 			A[i][j] = pow(y, m - j - 1);
 			b[i] += x[j] * A[i][j];
