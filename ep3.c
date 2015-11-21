@@ -107,11 +107,10 @@ void solve_QR_system(double **QR, int rows, int columns, double *b, double *gamm
 	backrow(QR, b, columns);
 }
 
-double generating_Q(int n, double **A, int k, double *gamma) {
-	double max, norm2;
+double generating_Q(int n, double **A, int k, double *gamma, double *norms) {
+	double max, t;
 	int i;
 	max = 0;
-	norm2 = 0;
 
 	for (i = k; i < n; i ++)
 		if (fabs(A[i][k]) > max)
@@ -121,21 +120,21 @@ double generating_Q(int n, double **A, int k, double *gamma) {
 		gamma[k] = 0;
 		return -1;
 	}
-	else {		
-		for (i = k; i < n; i ++) {
+	else {
+		t = 0;	
+		for (i = k; i < n; i ++)
 			A[i][k] = A[i][k]/max;
-			norm2 += pow(A[i][k], 2);
-		}
-		norm2 = sqrt(norm2);
+		t = sqrt(norms[k])/max;
+
 		if(A[k][k] < 0)
-			norm2 = -norm2;
-		A[k][k] = A[k][k] + norm2;
-		gamma[k] = A[k][k]/(norm2);
+			t = -t;
+		A[k][k] = A[k][k] + t;
+		gamma[k] = A[k][k]/(t);
 		for (i = k + 1; i < n; i ++) {
 			A[i][k] = A[i][k]/A[k][k];
 		}
 		A[k][k] = 1;
-		return (norm2 * max);
+		return (t * max);
 	}
 }
 
@@ -172,6 +171,9 @@ void permute(double **A, int rows, int columns, int *permutation, double *norms,
 		A[i][k] = A[i][column_with_max_norm];
 		A[i][column_with_max_norm] = swap;
 	}
+	swap = norms[k];
+	norms[k] = norms[column_with_max_norm];
+	norms[column_with_max_norm] = swap;
 }
 
 void QR_decomposition(double **A, double *gamma, int rows, int columns, int *permutation) {
@@ -181,7 +183,7 @@ void QR_decomposition(double **A, double *gamma, int rows, int columns, int *per
 	for (k = 0; k < columns; k ++) {
 		update_norms_vector(A, rows, columns, norms, k);
 		permute(A, rows, columns, permutation, norms, k);
-		t = generating_Q(rows, A, k, gamma);
+		t = generating_Q(rows, A, k, gamma, norms);
 		update_matrix(A, gamma, rows, columns, k);
 		A[k][k] = -t;
 	}
